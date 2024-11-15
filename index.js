@@ -15,26 +15,74 @@ app.use(cors());
 // Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Endpoint to upload DOCX and convert to PDF
-app.post('/convert', upload.single('file'), (req, res) => {
+// Load Service Account Key
+const serviceAccount = require('./service-account.json');
+
+// Authenticate using Service Account
+const auth = new google.auth.GoogleAuth({
+    keyFile: path.join(__dirname, 'service-account.json'),
+    scopes: ['https://www.googleapis.com/auth/drive.file'],
+});
+const drive = google.drive({ version: 'v3', auth });
+
+app.get('/', (req, res) => {
+    res.json(true);
+});
+
+app.post('/convert', upload.single('file'), async (req, res) => {
     if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.docx') {
         return res.status(400).send('Please upload a valid DOCX file.');
     }
 
-    const docxPath = path.join(__dirname, req.file.path);
-    const outputPdfPath = path.join(__dirname, 'uploads', `${req.file.filename}.pdf`);
+    try {
+        // Upload DOCX to the shared folder
+        const folderId = 'YOUR_SHARED_FOLDER_ID'; // Replace with your shared folder's ID
+        const fileMetadata = {
+            name: req.file.originalname,
+            parents: [folderId],
+        };
+        const media = {
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            body: fs.createReadStream(req.file.path),
+        };
 
-    docxPdf(docxPath, outputPdfPath, (err) => {
-        if (err) {
-            console.error(`Conversion error: ${err}`);
-            return res.status(500).send('Failed to convert DOCX to PDF.');
-        }
-
-        res.download(outputPdfPath, 'converted-file.pdf', () => {
-            fs.unlinkSync(docxPath);
-            fs.unlinkSync(outputPdfPath);
+        const uploadResponse = await drive.files.create({
+            resource: fileMetadata,
+            media: media,
+            fields: 'id',
         });
-    });
+
+        const fileId = uploadResponse.data.id;
+
+        // Export the uploaded DOCX to PDF
+        const pdfResponse = await drive.files.export(
+            {
+                fileId: fileId,
+                mimeType: 'application/pdf',
+            },
+            { responseType: 'stream' }
+        );
+
+        const outputPdfPath = path.join(__dirname, 'uploads', `${req.file.filename}.pdf`);
+        const writeStream = fs.createWriteStream(outputPdfPath);
+
+        pdfResponse.data.pipe(writeStream);
+
+        writeStream.on('finish', async () => {
+            // Respond with the PDF file
+            res.download(outputPdfPath, 'converted-file.pdf', async () => {
+                // Clean up files
+                fs.unlinkSync(req.file.path);
+                fs.unlinkSync(outputPdfPath);
+
+                // Optionally delete the file from Google Drive
+                await drive.files.delete({ fileId: fileId });
+            });
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Failed to convert DOCX to PDF.');
+    }
 });
 
 // Start the server
