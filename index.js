@@ -29,6 +29,7 @@ app.get('/', (req, res) => {
     res.json(true);
 });
 
+app.use(express.static('public'));
 
 app.post('/convert', upload.single('file'), async (req, res) => {
     if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.docx') {
