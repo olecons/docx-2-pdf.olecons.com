@@ -22,7 +22,8 @@ app.post('/convert', upload.single('file'), (req, res) => {
 
     const docxPath = path.join(__dirname, req.file.path);
     const outputPdfPath = path.join(__dirname, 'uploads', `${req.file.filename}.pdf`);
-    const command = `libreoffice --headless --convert-to pdf:"writer_pdf_Export" "${docxPath}" --outdir "${path.dirname(outputPdfPath)}"`;
+    // const command = `libreoffice --headless --convert-to pdf:"writer_pdf_Export" "${docxPath}" --outdir "${path.dirname(outputPdfPath)}"`;
+    const command = `pandoc "${docxPath}" -o "${outputPdfPath}" --pdf-engine=wkhtmltopdf`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
