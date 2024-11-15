@@ -4,7 +4,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors'); // Import cors
-const docxPdf = require('docx-pdf');
+const { google } = require('googleapis');
 
 const app = express();
 const port = 9040;
