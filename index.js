@@ -29,17 +29,17 @@ app.get('/', (req, res) => {
     res.json(true);
 });
 
+
 app.post('/convert', upload.single('file'), async (req, res) => {
     if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.docx') {
         return res.status(400).send('Please upload a valid DOCX file.');
     }
 
     try {
-        // Upload DOCX to the shared folder
-        const folderId = '16WwJnznCo_vKQL4xeFpWw8YorjZ9KNGi'; // Replace with your shared folder's ID
+        // Upload the DOCX file to Google Drive
         const fileMetadata = {
             name: req.file.originalname,
-            parents: [folderId],
+            mimeType: 'application/vnd.google-apps.document', // This will convert the file to Google Docs format
         };
         const media = {
             mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -54,7 +54,7 @@ app.post('/convert', upload.single('file'), async (req, res) => {
 
         const fileId = uploadResponse.data.id;
 
-        // Export the uploaded DOCX to PDF
+        // Export the Google Docs file to PDF
         const pdfResponse = await drive.files.export(
             {
                 fileId: fileId,
