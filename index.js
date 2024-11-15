@@ -4,7 +4,6 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors'); // Import cors
-const { google } = require('googleapis');
 
 const app = express();
 const port = 9040;
@@ -15,23 +14,7 @@ app.use(cors());
 // Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Load Service Account Key
-const serviceAccount = require('./service-account.json');
-
-// Authenticate using Service Account
-const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, 'service-account.json'),
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
-});
-const drive = google.drive({ version: 'v3', auth });
-
-app.get('/', (req, res) => {
-    res.json(true);
-});
-
-app.use(express.static('public'));
-
-app.post('/convert', upload.single('file'), async (req, res) => {
+app.post('/convert2', upload.single('file'), async (req, res) => {
     if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.docx') {
         return res.status(400).send('Please upload a valid DOCX file.');
     }
@@ -84,6 +67,38 @@ app.post('/convert', upload.single('file'), async (req, res) => {
         console.error(error);
         res.status(500).send('Failed to convert DOCX to PDF.');
     }
+});
+
+// Endpoint to upload DOCX and convert to PDF
+app.post('/convert', upload.single('file'), (req, res) => {
+    if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.docx') {
+        return res.status(400).send('Please upload a valid DOCX file.');
+    }
+
+    const docxPath = path.join(__dirname, req.file.path);
+    const outputPdfPath = path.join(__dirname, 'uploads', `${req.file.filename}.pdf`);
+    const command = `libreoffice --headless --convert-to pdf "${docxPath}" --outdir "${path.dirname(outputPdfPath)}"`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Conversion error: ${stderr}`);
+            return res.status(500).send('Failed to convert DOCX to PDF.');
+        }
+
+        fs.readFile(outputPdfPath, (err, data) => {
+            if (err) {
+                console.error(`File read error: ${err}`);
+                return res.status(500).send('Failed to read converted PDF.');
+            }
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'attachment; filename="converted-file.pdf"');
+            res.send(data);
+
+            fs.unlinkSync(docxPath);
+            fs.unlinkSync(outputPdfPath);
+        });
+    });
 });
 
 // Start the server
