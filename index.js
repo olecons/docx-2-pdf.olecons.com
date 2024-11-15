@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors'); // Import cors
+const docxPdf = require('docx-pdf');
 
 const app = express();
 const port = 9040;
@@ -22,26 +23,14 @@ app.post('/convert', upload.single('file'), (req, res) => {
 
     const docxPath = path.join(__dirname, req.file.path);
     const outputPdfPath = path.join(__dirname, 'uploads', `${req.file.filename}.pdf`);
-    // const command = `libreoffice --headless --convert-to pdf:"writer_pdf_Export" "${docxPath}" --outdir "${path.dirname(outputPdfPath)}"`;
-    const command = `pandoc "${docxPath}" -o "${outputPdfPath}" --pdf-engine=wkhtmltopdf`;
-    console.log({command});
 
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Conversion error: ${stderr}`);
+    docxPdf(docxPath, outputPdfPath, (err) => {
+        if (err) {
+            console.error(`Conversion error: ${err}`);
             return res.status(500).send('Failed to convert DOCX to PDF.');
         }
 
-        fs.readFile(outputPdfPath, (err, data) => {
-            if (err) {
-                console.error(`File read error: ${err}`);
-                return res.status(500).send('Failed to read converted PDF.');
-            }
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename="converted-file.pdf"');
-            res.send(data);
-
+        res.download(outputPdfPath, 'converted-file.pdf', () => {
             fs.unlinkSync(docxPath);
             fs.unlinkSync(outputPdfPath);
         });
