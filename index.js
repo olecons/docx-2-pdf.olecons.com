@@ -119,10 +119,9 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
 
         // Validate if the fetched file is a valid ZIP (DOCX)
         try {
-            const zip = new PizZip(fileBuffer);
 
             // Initialize Docxtemplater with delimiters and other configurations
-            const doc = new Docxtemplater(zip, {
+            const doc = new Docxtemplater(new PizZip(fileBuffer), {
                 paragraphLoop: true,
                 linebreaks: true,
                 delimiters: { start: '###', end: '###' } // Example delimiter
@@ -142,19 +141,24 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
 
             if(replaceLink) {
                 console.log("replacing link");
-                // Access the XML content of the document
-                const xml = doc.getZip().file('word/document.xml').asText();
-                console.log(xml);
-                // Replace any hyperlink in the document with http://olecons.com
-                const updatedXml = xml.replace(
-                    /<w:hyperlink[^>]*>(.*?)<\/w:hyperlink>/g, // Match all hyperlink nodes
-                    (match, content) => {
-                        return match.replace(/http[s]?:\/\/[^\s<]+/, 'http://olecons.com'); // Replace the URL
-                    }
-                );
-            
-                // Replace the XML content in the DOCX
-                doc.getZip().file('word/document.xml', updatedXml);
+                const zip = doc.getZip();
+                // Handle hyperlinks in the document.xml.rels
+                const relsXmlPath = 'word/_rels/document.xml.rels';
+                if (zip.file(relsXmlPath)) {
+                    const relsXml = zip.file(relsXmlPath).asText();
+                    console.log({relsXml})
+                    // Replace all hyperlinks in document.xml.rels
+                    const updatedRelsXml = relsXml.replace(
+                        /<Relationship[^>]*Target="http[s]?:\/\/[^"]*"[^>]*\/>/g,
+                        (match) => {
+                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, 'Target="http://olecons.com"');
+                        }
+                    );
+
+                    // Update the relationships file in the ZIP
+                    zip.file(relsXmlPath, updatedRelsXml);
+                }
+                return zip.generate({ type: 'nodebuffer' });
             }
             // Return the modified DOCX as a buffer
             return doc.getZip().generate({ type: 'nodebuffer' });
