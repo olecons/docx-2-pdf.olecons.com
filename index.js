@@ -119,9 +119,9 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
 
         // Validate if the fetched file is a valid ZIP (DOCX)
         try {
-            const zip = new PizZip(fileBuffer);
+
             // Initialize Docxtemplater with delimiters and other configurations
-            const doc = new Docxtemplater(zip, {
+            const doc = new Docxtemplater(new PizZip(fileBuffer), {
                 paragraphLoop: true,
                 linebreaks: true,
                 delimiters: { start: '###', end: '###' } // Example delimiter
@@ -141,6 +141,7 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
 
             if(replaceLink) {
                 console.log("replacing link", {replaceData});
+                const zip = doc.getZip();
                 // Handle hyperlinks in the document.xml.rels
                 const relsXmlPath = 'word/_rels/document.xml.rels';
                 if (zip.file(relsXmlPath)) {
@@ -150,13 +151,14 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
                     const updatedRelsXml = relsXml.replace(
                         /<Relationship[^>]*Target="http[s]?:\/\/[^"]*"[^>]*\/>/g,
                         (match) => {
-                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, `Target=${replaceData['SUMMARYLINK']}`);
+                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, 'Target="http://olecons.com"');
                         }
                     );
 
                     // Update the relationships file in the ZIP
                     zip.file(relsXmlPath, updatedRelsXml);
                 }
+                return zip.generate({ type: 'nodebuffer' });
             }
             // Return the modified DOCX as a buffer
             return doc.getZip().generate({ type: 'nodebuffer' });
