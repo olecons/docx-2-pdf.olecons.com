@@ -151,7 +151,7 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
                     const updatedRelsXml = relsXml.replace(
                         /<Relationship[^>]*Target="http[s]?:\/\/[^"]*"[^>]*\/>/g,
                         (match) => {
-                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, 'Target="http://olecons.com"');
+                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, `Target="${replaceData['SUMMARYLINK']}"`);
                         }
                     );
 
