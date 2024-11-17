@@ -11,7 +11,10 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "docx-merger": "^1.2.2",
+    "docxtemplater": "^3.53.0",
     "express": "^4.21.1",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "pizzip": "^3.1.7"
   }
 }
