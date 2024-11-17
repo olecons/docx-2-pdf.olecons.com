@@ -162,8 +162,6 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
             }
             // Return the modified DOCX as a buffer
             return doc.getZip().generate({ type: 'nodebuffer' });
-            // Return the modified DOCX as a buffer
-            return doc.getZip().generate({ type: 'nodebuffer' });
         } catch (zipError) {
             throw new Error(`Error processing DOCX file: ${zipError.message}`);
         }
