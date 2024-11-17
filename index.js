@@ -140,7 +140,7 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
             doc.render(replaceData);
 
             if(replaceLink) {
-                console.log("replacing link");
+                console.log("replacing link", {replaceData});
                 const zip = doc.getZip();
                 // Handle hyperlinks in the document.xml.rels
                 const relsXmlPath = 'word/_rels/document.xml.rels';
@@ -151,7 +151,7 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
                     const updatedRelsXml = relsXml.replace(
                         /<Relationship[^>]*Target="http[s]?:\/\/[^"]*"[^>]*\/>/g,
                         (match) => {
-                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, 'Target="http://olecons.com"');
+                            return match.replace(/Target="http[s]?:\/\/[^"]*"/, `Target=${replaceData['SUMMARYLINK']}`);
                         }
                     );
 
