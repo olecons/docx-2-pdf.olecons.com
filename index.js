@@ -119,9 +119,9 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
 
         // Validate if the fetched file is a valid ZIP (DOCX)
         try {
-
+            const zip = new PizZip(fileBuffer);
             // Initialize Docxtemplater with delimiters and other configurations
-            const doc = new Docxtemplater(new PizZip(fileBuffer), {
+            const doc = new Docxtemplater(zip, {
                 paragraphLoop: true,
                 linebreaks: true,
                 delimiters: { start: '###', end: '###' } // Example delimiter
@@ -141,7 +141,6 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
 
             if(replaceLink) {
                 console.log("replacing link", {replaceData});
-                const zip = doc.getZip();
                 // Handle hyperlinks in the document.xml.rels
                 const relsXmlPath = 'word/_rels/document.xml.rels';
                 if (zip.file(relsXmlPath)) {
