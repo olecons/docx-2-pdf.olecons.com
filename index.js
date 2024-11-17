@@ -107,7 +107,7 @@ app.post('/convert', upload.single('file'), (req, res) => {
     });
 });
 
-async function replacePlaceholders(fileUrl, dataValues) {
+async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
     try {
         // Fetch the DOCX file from the provided URL
         const response = await fetch(fileUrl);
@@ -140,6 +140,23 @@ async function replacePlaceholders(fileUrl, dataValues) {
             // Render the DOCX file with the replacement data
             doc.render(replaceData);
 
+            if(replaceLink) {
+                // Access the XML content of the document
+                const xml = doc.getZip().file('word/document.xml').asText();
+            
+                // Replace any hyperlink in the document with http://olecons.com
+                const updatedXml = xml.replace(
+                    /<w:hyperlink[^>]*>(.*?)<\/w:hyperlink>/g, // Match all hyperlink nodes
+                    (match, content) => {
+                        return match.replace(/http[s]?:\/\/[^\s<]+/, 'http://olecons.com'); // Replace the URL
+                    }
+                );
+            
+                // Replace the XML content in the DOCX
+                doc.getZip().file('word/document.xml', updatedXml);
+            }
+            // Return the modified DOCX as a buffer
+            return doc.getZip().generate({ type: 'nodebuffer' });
             // Return the modified DOCX as a buffer
             return doc.getZip().generate({ type: 'nodebuffer' });
         } catch (zipError) {
@@ -212,7 +229,7 @@ app.post('/merge-pdf', async (req, res) => {
         }
 
         // Replace placeholders in the end file and convert to PDF
-        const endBuffer = await replacePlaceholders(end.file_url, end.data_values);
+        const endBuffer = await replacePlaceholders(end.file_url, end.data_values, true);
         const endPdfPath = await convertDocxToPdf(endBuffer, outputDir);
         pdfPaths.push(endPdfPath);
 
