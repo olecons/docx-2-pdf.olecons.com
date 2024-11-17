@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const Docxtemplater = require('docxtemplater');
 const PizZip = require('pizzip');
 const DocxMerger = require('docx-merger');
+const PDFDocument = require('pdf-lib').PDFDocument;
 
 const app = express();
 const port = 9040;
