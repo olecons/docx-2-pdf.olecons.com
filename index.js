@@ -204,8 +204,8 @@ app.post('/merge-pdf', async (req, res) => {
         // Send the merged PDF as a response
         res.sendFile(mergedPdfPath, () => {
             // Clean up the merged PDF
-            pdfPaths.map(fs.unlinkSync);
-            fs.unlinkSync(mergedPdfPath);
+            // pdfPaths.map(fs.unlinkSync);
+            // fs.unlinkSync(mergedPdfPath);
         });
     } catch (error) {
         console.error('Error processing files:', error);
