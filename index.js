@@ -141,9 +141,10 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
             doc.render(replaceData);
 
             if(replaceLink) {
+                console.log("replacing link");
                 // Access the XML content of the document
                 const xml = doc.getZip().file('word/document.xml').asText();
-            
+                console.log(xml);
                 // Replace any hyperlink in the document with http://olecons.com
                 const updatedXml = xml.replace(
                     /<w:hyperlink[^>]*>(.*?)<\/w:hyperlink>/g, // Match all hyperlink nodes
