@@ -106,30 +106,48 @@ app.post('/convert', upload.single('file'), (req, res) => {
     });
 });
 
-// Utility to replace placeholders in a DOCX
 async function replacePlaceholders(fileUrl, dataValues) {
-    const response = await fetch(fileUrl);
-    const fileBuffer = await response.arrayBuffer();
-
-    const zip = new PizZip(fileBuffer);
-    const doc = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true,
-        delimiters: { start: '###', end: '###' }
-    });
-    // Create the replaceData object with formatted keys
-    const replaceData = {};
-    for (const key in dataValues) {
-        if (dataValues.hasOwnProperty(key)) {
-            // Use the key without prefixes and surround with ###
-            const placeholder = `${key.replace(/^(initial_|variation_|end_)/, '')}`;
-            replaceData[placeholder] = dataValues[key];
+    try {
+        // Fetch the DOCX file from the provided URL
+        const response = await fetch(fileUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch file from URL: ${fileUrl}, Status: ${response.status}`);
         }
+
+        const fileBuffer = await response.arrayBuffer();
+
+        // Validate if the fetched file is a valid ZIP (DOCX)
+        try {
+            const zip = new PizZip(fileBuffer);
+
+            // Initialize Docxtemplater with delimiters and other configurations
+            const doc = new Docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+                delimiters: { start: '###', end: '###' } // Example delimiter
+            });
+
+            // Prepare the replacement data by removing prefixes and formatting keys
+            const replaceData = {};
+            for (const key in dataValues) {
+                if (dataValues.hasOwnProperty(key)) {
+                    const placeholder = key.replace(/^(initial_|variation_|end_)/, ''); // Remove prefixes
+                    replaceData[placeholder] = dataValues[key];
+                }
+            }
+
+            // Render the DOCX file with the replacement data
+            doc.render(replaceData);
+
+            // Return the modified DOCX as a buffer
+            return doc.getZip().generate({ type: 'nodebuffer' });
+        } catch (zipError) {
+            throw new Error(`Error processing DOCX file: ${zipError.message}`);
+        }
+    } catch (error) {
+        console.error('Error in replacePlaceholders:', error.message);
+        throw error; // Rethrow the error to be handled by the calling function
     }
-    // Set the data for replacement
-    // doc.setData(replaceData);
-    doc.render(replaceData);
-    return doc.getZip().generate({ type: 'nodebuffer' });
 }
 
 // Convert a DOCX file to PDF using LibreOffice
