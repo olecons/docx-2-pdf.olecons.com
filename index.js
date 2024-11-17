@@ -158,7 +158,6 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
                     // Update the relationships file in the ZIP
                     zip.file(relsXmlPath, updatedRelsXml);
                 }
-                return zip.generate({ type: 'nodebuffer' });
             }
             // Return the modified DOCX as a buffer
             return doc.getZip().generate({ type: 'nodebuffer' });
