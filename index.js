@@ -219,7 +219,7 @@ async function mergePdfFiles(pdfPaths, outputFilePath) {
 }
 
 app.post('/merge-pdf', async (req, res) => {
-    const { fileName, initial, vacations, end } = req.body;
+    const { initial, vacations, end } = req.body;
 
     try {
         const outputDir = path.join(__dirname, 'temp');
@@ -245,14 +245,18 @@ app.post('/merge-pdf', async (req, res) => {
         pdfPaths.push(endPdfPath);
 
         // Merge all PDFs
-        const mergedPdfPath = path.join(outputDir, fileName);
+        const mergedPdfPath = path.join(outputDir, `merged-${Date.now()}.pdf`);
         await mergePdfFiles(pdfPaths, mergedPdfPath);
 
         // Send the merged PDF as a response
         res.sendFile(mergedPdfPath, () => {
             // Clean up the merged PDF
-            pdfPaths.map(fs.unlinkSync);
-            fs.unlinkSync(mergedPdfPath);
+            try {
+                pdfPaths.map(fs.unlinkSync);
+                fs.unlinkSync(mergedPdfPath);
+            } catch ($e) {
+
+            }
         });
     } catch (error) {
         console.error('Error processing files:', error);
