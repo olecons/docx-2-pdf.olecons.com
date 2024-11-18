@@ -137,7 +137,7 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
                     } else if (dataValues[key] && placeholder == 'EVENTDATE') {
                         replaceData[placeholder] = " on "+dataValues[key];
                     } else if (dataValues[key] && placeholder == 'EVENTNAME') {
-                        replaceData[placeholder] = dataValues[key] + ' - ';
+                        replaceData[placeholder] = (dataValues[key] || '').toUpperCase() + ' - ';
                     } else {
                         replaceData[placeholder] = dataValues[key];
                     }
