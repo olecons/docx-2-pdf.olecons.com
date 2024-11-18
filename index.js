@@ -132,7 +132,15 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
             for (const key in dataValues) {
                 if (dataValues.hasOwnProperty(key)) {
                     const placeholder = key.replace(/^(initial_|variation_|end_)/, ''); // Remove prefixes
-                    replaceData[placeholder] = dataValues[key];
+                    if (dataValues[key] && placeholder == 'CXNAME') {
+                        replaceData[placeholder] = " "+dataValues[key];
+                    } else if (dataValues[key] && placeholder == 'EVENTDATE') {
+                        replaceData[placeholder] = " on "+dataValues[key];
+                    } else if (dataValues[key] && placeholder == 'EVENTNAME') {
+                        replaceData[placeholder] = dataValues[key] + ' - ';
+                    } else {
+                        replaceData[placeholder] = dataValues[key];
+                    }
                 }
             }
 
