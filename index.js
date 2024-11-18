@@ -147,7 +147,7 @@ async function replacePlaceholders(fileUrl, dataValues, replaceLink = false) {
             // Render the DOCX file with the replacement data
             doc.render(replaceData);
 
-            if(replaceLink) {
+            if(replaceLink && replaceData['SUMMARYLINK']) {
                 console.log("replacing link", {replaceData});
                 const zip = doc.getZip();
                 // Handle hyperlinks in the document.xml.rels
